@@ -9,7 +9,7 @@ import (
 
 type ViaCEPResponse struct {
 	Localidade string `json:"localidade"`
-	Erro       bool   `json:"erro"`
+	Erro       any    `json:"erro"`
 }
 
 type ViaCEPClient struct{}
@@ -34,8 +34,17 @@ func (c *ViaCEPClient) GetCityByCEP(cep string) (string, error) {
 		return "", err
 	}
 
-	if data.Erro {
-		return "", errors.New("cep not found")
+	if data.Erro != nil {
+		switch v := data.Erro.(type) {
+		case bool:
+			if v {
+				return "", errors.New("cep not found")
+			}
+		case string:
+			if v == "true" {
+				return "", errors.New("cep not found")
+			}
+		}
 	}
 
 	return data.Localidade, nil
